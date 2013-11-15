@@ -332,6 +332,8 @@ print -- "Cabal sandboxing, install and test"
 cabal sandbox init || reinit
 cabal install
 cabal test
+testfile="./.cabal-sandbox/bin/test-$project"
+[[ -x $testfile ]] && $testfile
 
 # -- Final touch
 print "\n\n"

@@ -73,7 +73,6 @@ you "Ask me the questions, bridgekeeper, I am not afraid.\n"
 bk "What is the name of your project?"
 print -n "> ";read project
 project=${${project:gs/ /-/}:l} # use lowercase and replace spaces by dashes
-print -- DEBUG $project
 
 # Verify project has the right format
 if perl -e 'exit("'$project'" =~ /^[a-z][a-z0-9-]*$/)'; then
@@ -93,8 +92,8 @@ ask email
 email="$answer"
 # github
 bkn "What is your github user name?"
-githubname="$( curl -sH 'Accept: application/vnd.github.v3.text-match+json' 'https://api.github.com/search/users?q='$email|grep '"login":'|perl -pe 's/.*"([^"]*)",/$1/' )"
-print -- " ($githubname)"
+githubname=( $( curl -sH 'Accept: application/vnd.github.v3.text-match+json' 'https://api.github.com/search/users?q='$email|grep '"login":'|perl -pe 's/.*"([^"]*)",/$1/' ) )
+(( ${#githubname} == 1 )) && print -- " ($githubname)"
 print -n "> ";read github
 [[ $github = "" ]] && github=$githubname
 # synopsis

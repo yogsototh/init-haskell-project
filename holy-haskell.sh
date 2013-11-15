@@ -2,7 +2,7 @@
 
 autoload colors
 colors
-for COLOR in RED GREE YELLOW BLUE MAGENTA CYAN BLACK WHITE; do
+for COLOR in RED GREEN YELLOW BLUE MAGENTA CYAN BLACK WHITE; do
     eval $COLOR='$fg_no_bold[${(L)COLOR}]'
     eval BOLD_$COLOR='$fg_bold[${(L)COLOR}]'
 done
@@ -11,12 +11,12 @@ eval RESET='$reset_color'
 answer=""
 # Capitalize a string
 capitalize(){
-    local str="$*"
-    print -- ${${str[1]}:u}${str[2,-1]}
+    local str="$(print -- "$*" | sed 's/-/ /g')"
+    print -- ${(C)str} | sed 's/ //g'
 }
-bk(){print -- "${RED}Bridgekeeper: $*${RESET}"}
-bkn(){print -n -- "${RED}Bridgekeeper: $*${RESET}"}
-you(){print -- "${BLUE}You: $*${RESET}"}
+bk(){print -- "${GREEN}Bridgekeeper: $*${RESET}"}
+bkn(){print -n -- "${GREEN}Bridgekeeper: $*${RESET}"}
+you(){print -- "${YELLOW}You: $*${RESET}"}
 log(){print -- $*}
 err(){
     {
@@ -72,14 +72,18 @@ you "Ask me the questions, bridgekeeper, I am not afraid.\n"
 # project name
 bk "What is the name of your project?"
 print -n "> ";read project
+project=${${project:gs/ /-/}:l} # use lowercase and replace spaces by dashes
+print -- DEBUG $project
 
-if perl -e 'exit("'$project'" =~ /^[a-zA-Z0-9]*$/)'; then
-    err "The project name can't contains non ASCII character"
+# Verify project has the right format
+if perl -e 'exit("'$project'" =~ /^[a-z][a-z0-9-]*$/)'; then
+    err "The project must start with a letter and contains only letter, number, spaces or dashes"
 fi
-project=${project:l} # use lowercase for project name
-module=$(capitalize $project)
 [[ $project = "" ]] && err "Can't use empty project name"
 [[ -e $project ]] && err "$project directory already exists"
+
+# Find the main module name from the project name
+module=$(capitalize $project)
 
 # author name
 ask name
@@ -88,8 +92,11 @@ name="$answer"
 ask email
 email="$answer"
 # github
-bk "What is your github user name?"
+bkn "What is your github user name?"
+githubname="$( curl -sH 'Accept: application/vnd.github.v3.text-match+json' 'https://api.github.com/search/users?q='$email|grep '"login":'|perl -pe 's/.*"([^"]*)",/$1/' )"
+print -- " ($githubname)"
 print -n "> ";read github
+[[ $github = "" ]] && github=$githubname
 # synopsis
 bk "What is your project in less than ten words?"
 print -n "> ";read description
